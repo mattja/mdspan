@@ -89,6 +89,12 @@ private:
   MDSPAN_FORCE_INLINE_FUNCTION _MDSPAN_CONSTEXPR_14 __strides_storage_t&
   __strides_storage() noexcept { return this->__base_t::__ref().__second(); }
 
+  template <size_t... Idxs>
+  MDSPAN_FORCE_INLINE_FUNCTION
+  static constexpr ptrdiff_t _static_stride_impl(size_t r, std::integer_sequence<size_t, Idxs...>) noexcept {
+    return _MDSPAN_FOLD_PLUS_RIGHT(((Idxs == r) ? Strides : 0), /* + ... + */ 0);
+  }
+
   //----------------------------------------------------------------------------
 
   template <class, ptrdiff_t...>
@@ -178,6 +184,10 @@ public: // (but not really)
   }
 
 public:
+
+  // TODO @proposal-bug member functions to support the use of partially static strides
+  MDSPAN_INLINE_FUNCTION
+  static constexpr size_t dynamic_stride_count() noexcept { return _MDSPAN_FOLD_PLUS_RIGHT((int(Strides == dynamic_extent)), /* + ... + */ 0); }
 
   //--------------------------------------------------------------------------------
 
@@ -290,6 +300,12 @@ public:
   MDSPAN_FORCE_INLINE_FUNCTION
   constexpr ptrdiff_t operator()(Indices... idxs) const noexcept {
     return __impl::_call_op_impl(*this, idxs...);
+  }
+
+  // TODO @proposal-bug member functions to support the use of partially static strides
+  MDSPAN_INLINE_FUNCTION
+  static constexpr ptrdiff_t static_stride(size_t r) noexcept {
+    return _static_stride_impl(r, std::make_integer_sequence<size_t, sizeof...(Strides)>{});
   }
 
   MDSPAN_INLINE_FUNCTION
